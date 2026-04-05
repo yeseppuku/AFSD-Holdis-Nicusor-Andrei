@@ -1,90 +1,114 @@
-produse = ["espresso", "latte", "cappuccino", "ceai", "ciocolata calda", "croissant"]
-preturi = [8.0, 12.0, 11.0, 7.0, 10.0, 9.0]
-stoc = [20, 15, 18, 30, 12, 10]
-cantitati = [0, 0, 0, 0, 0, 0]
-reducere_activa = 0
+import time
+import random
+import sys
+
+sys.setrecursionlimit(10000)
 
 
-def afisare_produse():
-    for i in range(len(produse)):
-        print(f"{i}: {produse[i]} | {preturi[i]} lei | Stoc: {stoc[i]}")
+class Metrice:
+    def __init__(self):
+        self.comp = 0
+        self.mutari = 0
+
+    def reset(self):
+        self.comp = 0
+        self.mutari = 0
 
 
-def total_comanda():
-    return sum(cantitati[i] * preturi[i] for i in range(len(produse)))
+def bubble_sort(arr, m):
+    n = len(arr)
+    for i in range(n):
+        for j in range(0, n - i - 1):
+            m.comp += 1
+            if arr[j] > arr[j + 1]:
+                arr[j], arr[j + 1] = arr[j + 1], arr[j]
+                m.mutari += 1
 
 
-def reducere_stabilita(total, tip):
-    if tip == "student" and total >= 30: return min(0.10 * total, total)
-    if tip == "happy" and total >= 50: return min(0.15 * total, total)
-    if tip == "cupon" and total >= 25: return min(7.0, total)
-    print("Reducere indisponibila pentru acest total.")
-    return 0
-
-
-def tiparire_bon(total, reducere):
-    print("\n--- BON ---")
-    for i in range(len(produse)):
-        if cantitati[i] > 0:
-            print(f"{produse[i]}: {cantitati[i]} x {preturi[i]} = {cantitati[i] * preturi[i]} lei")
-    print(f"Total: {total} | Reducere: {reducere} | Final: {total - reducere}")
-
-
-while True:
-    print("\n1:Meniu 2:Adauga 3:Sterge 4:Reducere 5:Final 6:Anulare 0:Iesire")
-    try:
-        opt = input("Optiune: ")
-
-        if opt == "0": break
-
-        if opt == "1":
-            afisare_produse()
-
-        elif opt == "2":
-            afisare_produse()
-            idx = int(input("Index produs: "))
-            cant = int(input("Cantitate: "))
-            if 0 <= idx < len(produse) and cant > 0 and (cantitati[idx] + cant) <= stoc[idx]:
-                cantitati[idx] += cant
+def merge_sort(arr, m):
+    if len(arr) > 1:
+        mid = len(arr) // 2
+        L = arr[:mid]
+        R = arr[mid:]
+        merge_sort(L, m)
+        merge_sort(R, m)
+        i = j = k = 0
+        while i < len(L) and j < len(R):
+            m.comp += 1
+            if L[i] < R[j]:
+                arr[k] = L[i]
+                i += 1
             else:
-                print("Eroare: Stoc insuficient sau index invalid.")
+                arr[k] = R[j]
+                j += 1
+            m.mutari += 1
+            k += 1
+        while i < len(L):
+            arr[k] = L[i]
+            i += 1
+            k += 1
+            m.mutari += 1
+        while j < len(R):
+            arr[k] = R[j]
+            j += 1
+            k += 1
+            m.mutari += 1
 
-        elif opt == "3":
-            idx = int(input("Index produs: "))
-            cant = int(input("Cantitate de scazut: "))
-            if 0 <= idx < len(produse) and 0 < cant <= cantitati[idx]:
-                cantitati[idx] -= cant
-            else:
-                print("Eroare: Cantitate invalida.")
 
-        elif opt == "4":
-            suma = total_comanda()
-            if suma == 0:
-                print("Comanda este goala.")
-            else:
-                tip = input("Alege (student/happy/cupon/fara/inapoi): ")
-                if tip == "fara":
-                    reducere_activa = 0
-                elif tip != "inapoi":
-                    reducere_activa = reducere_stabilita(suma, tip)
+def quick_sort(arr, low, high, m):
+    if low < high:
+        p = partition(arr, low, high, m)
+        quick_sort(arr, low, p - 1, m)
+        quick_sort(arr, p + 1, high, m)
 
-        elif opt == "5":
-            suma = total_comanda()
-            if suma > 0:
-                tiparire_bon(suma, reducere_activa)
-                for i in range(len(produse)):
-                    stoc[i] -= cantitati[i]
-                    cantitati[i] = 0
-                reducere_activa = 0
-            else:
-                print("Esti sarac? N-ai adaugat nimic :))).")
 
-        elif opt == "6":
-            cantitati = [0] * len(produse)
-            reducere_activa = 0
-            print("Comanda a fost anulata.")
-        else:
-            print("Optiune invalida.")
+def partition(arr, low, high, m):
+    pivot = arr[high]
+    i = low - 1
+    for j in range(low, high):
+        m.comp += 1
+        if arr[j] < pivot:
+            i += 1
+            arr[i], arr[j] = arr[j], arr[i]
+            m.mutari += 1
+    arr[i + 1], arr[high] = arr[high], arr[i + 1]
+    m.mutari += 1
+    return i + 1
 
-    except ValueError:
-        print("Eroare: Nu faci diferenta dintre litere si numere? sad...")
+
+def genereaza(n, tip):
+    if tip == "aleator": return [random.randint(0, 1000) for _ in range(n)]
+    if tip == "sortat": return list(range(n))
+    if tip == "invers": return list(range(n, 0, -1))
+    return []
+
+
+def test():
+    random.seed(42)
+    dimensiuni = [100, 500, 1000]
+    tipuri = ["aleator", "sortat", "invers"]
+    m = Metrice()
+
+    print(f"{'Algoritm':<12} | {'N':<5} | {'Tip':<8} | {'Timp(s)':<10} | {'Comp':<10} | {'Mutari'}")
+    print("-" * 65)
+
+    for n in dimensiuni:
+        for tip in tipuri:
+            data_orig = genereaza(n, tip)
+            algs = [
+                ("Bubble", lambda a: bubble_sort(a, m)),
+                ("Merge", lambda a: merge_sort(a, m)),
+                ("Quick", lambda a: quick_sort(a, 0, len(a) - 1, m))
+            ]
+
+            for nume, func in algs:
+                copie = data_orig.copy()
+                m.reset()
+                start = time.time()
+                func(copie)
+                durata = time.time() - start
+
+                print(f"{nume:<12} | {n:<5} | {tip:<8} | {durata:<10.5f} | {m.comp:<10} | {m.mutari}")
+
+
+test()
