@@ -1,1 +1,0 @@
-# AFSD-Holdis Nicusor Andrei
