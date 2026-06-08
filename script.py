@@ -2,8 +2,8 @@ import time
 import random
 import sys
 
-sys.setrecursionlimit(10000)
-
+# Crestem limita de recursivitate pentru Quick Sort pe cazurile nefavorabile
+sys.setrecursionlimit(20000)
 
 class Metrice:
     def __init__(self):
@@ -14,6 +14,8 @@ class Metrice:
         self.comp = 0
         self.mutari = 0
 
+
+# --- ALGORITMI DE SORTARE ---
 
 def bubble_sort(arr, m):
     n = len(arr)
@@ -30,12 +32,14 @@ def merge_sort(arr, m):
         mid = len(arr) // 2
         L = arr[:mid]
         R = arr[mid:]
+        
         merge_sort(L, m)
         merge_sort(R, m)
+        
         i = j = k = 0
         while i < len(L) and j < len(R):
             m.comp += 1
-            if L[i] < R[j]:
+            if L[i] <= R[j]:  # S-a pus <= pentru stabilitate
                 arr[k] = L[i]
                 i += 1
             else:
@@ -43,11 +47,13 @@ def merge_sort(arr, m):
                 j += 1
             m.mutari += 1
             k += 1
+            
         while i < len(L):
             arr[k] = L[i]
             i += 1
             k += 1
             m.mutari += 1
+            
         while j < len(R):
             arr[k] = R[j]
             j += 1
@@ -76,39 +82,47 @@ def partition(arr, low, high, m):
     return i + 1
 
 
+# --- GENERAREA DATELOR DE TEST ---
+
 def genereaza(n, tip):
-    if tip == "aleator": return [random.randint(0, 1000) for _ in range(n)]
-    if tip == "sortat": return list(range(n))
-    if tip == "invers": return list(range(n, 0, -1))
+    if tip == "aleator": 
+        return [random.randint(0, 10000) for _ in range(n)]
+    if tip == "sortat": 
+        return list(range(n))
+    if tip == "invers": 
+        return list(range(n, 0, -1))
+    if tip == "duplicate": 
+        # Genereaza doar din 5 valori posibile pentru a avea multe duplicate
+        return [random.choice([1, 2, 3, 4, 5]) for _ in range(n)]
+    if tip == "aproape sortat":
+        arr = list(range(n))
+        # Interschimbam ~5% din elemente pentru a-l face "aproape sortat"
+        for _ in range(max(1, n // 20)):
+            idx1 = random.randint(0, n - 1)
+            idx2 = random.randint(0, n - 1)
+            arr[idx1], arr[idx2] = arr[idx2], arr[idx1]
+        return arr
     return []
 
 
+# --- VERIFICAREA CORECTITUDINII ---
+
+def este_sortat(arr):
+    """Verifica daca o lista este sortata crescator."""
+    return all(arr[i] <= arr[i + 1] for i in range(len(arr) - 1))
+
+
+# --- SUITA DE TESTARE ---
+
 def test():
+    # Fixam seed-ul pentru reproductibilitate
     random.seed(42)
-    dimensiuni = [100, 500, 1000]
-    tipuri = ["aleator", "sortat", "invers"]
-    m = Metrice()
-
-    print(f"{'Algoritm':<12} | {'N':<5} | {'Tip':<8} | {'Timp(s)':<10} | {'Comp':<10} | {'Mutari'}")
-    print("-" * 65)
-
-    for n in dimensiuni:
-        for tip in tipuri:
-            data_orig = genereaza(n, tip)
-            algs = [
-                ("Bubble", lambda a: bubble_sort(a, m)),
-                ("Merge", lambda a: merge_sort(a, m)),
-                ("Quick", lambda a: quick_sort(a, 0, len(a) - 1, m))
-            ]
-
-            for nume, func in algs:
-                copie = data_orig.copy()
-                m.reset()
-                start = time.time()
-                func(copie)
-                durata = time.time() - start
-
-                print(f"{nume:<12} | {n:<5} | {tip:<8} | {durata:<10.5f} | {m.comp:<10} | {m.mutari}")
-
-
-test()
+    
+    # Cerință: minimum 5 dimensiuni diferite
+    dimensiuni = [100, 500, 1000, 3000, 5000] 
+    
+    # Cerință: minimum 5 tipuri de intrări
+    tipuri = ["aleator", "sortat", "invers", "duplicate", "aproape sortat"]
+    
+    # Cerință: Număr de rulări per test pentru a face media (recomandat 3 sau 5)
+    NUMAR_RULARI =
